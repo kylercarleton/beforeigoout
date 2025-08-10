@@ -38,24 +38,50 @@
   <h1>Before I Go Out</h1>
   <div id="status">Checking your location…</div>
   <div id="content">
-    <!-- Weather, traffic, and checklist will go here -->
+    <!-- Weather info will appear here -->
   </div>
 
   <script>
     const statusEl = document.getElementById('status');
     const contentEl = document.getElementById('content');
 
+    const OPENWEATHER_API_KEY = 'YOUR_API_KEY_HERE'; // ← Replace this with your API key
+
+    function fetchWeather(lat, lon) {
+      const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=imperial&appid=${OPENWEATHER_API_KEY}`;
+      fetch(url)
+        .then(res => res.json())
+        .then(data => {
+          if (data.cod !== 200) {
+            statusEl.textContent = 'Weather data unavailable.';
+            contentEl.textContent = '';
+            return;
+          }
+          statusEl.textContent = 'Here’s the weather for your location:';
+          const temp = Math.round(data.main.temp);
+          const desc = data.weather[0].description;
+          const iconCode = data.weather[0].icon;
+          const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
+          contentEl.innerHTML = `
+            <img src="${iconUrl}" alt="${desc}" />
+            <p><strong>${temp}°F</strong> — ${desc}</p>
+          `;
+        })
+        .catch(() => {
+          statusEl.textContent = 'Error fetching weather data.';
+          contentEl.textContent = '';
+        });
+    }
+
     function success(position) {
       const latitude = position.coords.latitude;
       const longitude = position.coords.longitude;
-      statusEl.textContent = 'Location found!';
-      contentEl.innerHTML = `<p>Your coordinates:</p><p>${latitude.toFixed(4)}, ${longitude.toFixed(4)}</p>`;
-      // Next: fetch weather and traffic here
+      fetchWeather(latitude, longitude);
     }
 
-    function error(err) {
+    function error() {
       statusEl.textContent = 'Unable to retrieve location.';
-      contentEl.innerHTML = `<p>Please allow location access or enter your city manually (coming soon).</p>`;
+      contentEl.innerHTML = `<p>Please allow location access to see the weather.</p>`;
     }
 
     if (!navigator.geolocation) {
