@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Before I Go Out</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      max-width: 480px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      color: #222;
+      background: #f9fefc;
+      text-align: center;
+    }
+    h1 {
+      font-weight: 700;
+      font-size: 2.2rem;
+      margin-bottom: 1rem;
+      color: #2c3e50;
+    }
+    #status {
+      margin: 1rem 0;
+      font-size: 1.1rem;
+      color: #555;
+    }
+    #content {
+      margin-top: 2rem;
+      font-size: 1.25rem;
+      line-height: 1.6;
+      min-height: 120px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Before I Go Out</h1>
+  <div id="status">Checking your location…</div>
+  <div id="content">
+    <!-- Weather, traffic, and checklist will go here -->
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const contentEl = document.getElementById('content');
+
+    function success(position) {
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      statusEl.textContent = 'Location found!';
+      contentEl.innerHTML = `<p>Your coordinates:</p><p>${latitude.toFixed(4)}, ${longitude.toFixed(4)}</p>`;
+      // Next: fetch weather and traffic here
+    }
+
+    function error(err) {
+      statusEl.textContent = 'Unable to retrieve location.';
+      contentEl.innerHTML = `<p>Please allow location access or enter your city manually (coming soon).</p>`;
+    }
+
+    if (!navigator.geolocation) {
+      statusEl.textContent = 'Geolocation is not supported by your browser.';
+      contentEl.innerHTML = `<p>Try a different browser or device.</p>`;
+    } else {
+      navigator.geolocation.getCurrentPosition(success, error);
+    }
+  </script>
+</body>
+</html>
