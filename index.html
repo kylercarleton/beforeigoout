@@ -1,93 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Before I Go Out - WeatherAPI</title>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
-        Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-      max-width: 480px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-      color: #222;
-      background: #f9fefc;
-      text-align: center;
-    }
-    h1 {
-      font-weight: 700;
-      font-size: 2.2rem;
-      margin-bottom: 1rem;
-      color: #2c3e50;
-    }
-    #status {
-      margin: 1rem 0;
-      font-size: 1.1rem;
-      color: #555;
-    }
-    #content {
-      margin-top: 2rem;
-      font-size: 1.25rem;
-      line-height: 1.6;
-      min-height: 120px;
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Before I Go Out - MetaWeather</title>
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+      Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    max-width: 480px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    color: #222;
+    background: #f9fefc;
+    text-align: center;
+  }
+  h1 {
+    font-weight: 700;
+    font-size: 2.2rem;
+    margin-bottom: 1rem;
+    color: #2c3e50;
+  }
+  #status {
+    margin: 1rem 0;
+    font-size: 1.1rem;
+    color: #555;
+  }
+  #content {
+    margin-top: 2rem;
+    font-size: 1.25rem;
+    line-height: 1.6;
+    min-height: 120px;
+  }
+  img.weather-icon {
+    width: 64px;
+    height: 64px;
+  }
+</style>
 </head>
 <body>
-  <h1>Before I Go Out</h1>
-  <div id="status">Checking your location…</div>
-  <div id="content"></div>
+<h1>Before I Go Out</h1>
+<div id="status">Checking your location…</div>
+<div id="content"></div>
 
-  <script>
-    const statusEl = document.getElementById('status');
-    const contentEl = document.getElementById('content');
+<script>
+const statusEl = document.getElementById('status');
+const contentEl = document.getElementById('content');
 
-    const WEATHERAPI_KEY = 'b8978e2590f74f24b5440737251008'; // Replace with your WeatherAPI key
+// MetaWeather image base URL
+const METAWEATHER_ICON_BASE = 'https://www.metaweather.com/static/img/weather/png/64/';
 
-    function fetchWeather(lat, lon) {
-      const url = `https://api.weatherapi.com/v1/current.json?key=${WEATHERAPI_KEY}&q=${lat},${lon}&aqi=no`;
-      fetch(url)
-        .then(res => res.json())
-        .then(data => {
-          if (data.error) {
-            statusEl.textContent = `Weather data unavailable: ${data.error.message}`;
-            contentEl.textContent = '';
-            return;
-          }
-          statusEl.textContent = 'Here’s the weather for your location:';
-          const temp = data.current.temp_f;
-          const condition = data.current.condition.text;
-          const iconUrl = `https:${data.current.condition.icon}`;
-          contentEl.innerHTML = `
-            <img src="${iconUrl}" alt="${condition}" />
-            <p><strong>${temp}°F</strong> — ${condition}</p>
-          `;
-        })
-        .catch(() => {
-          statusEl.textContent = 'Error fetching weather data.';
-          contentEl.textContent = '';
-        });
-    }
+// Step 1: Get WOEID from lat/lon
+function getWOEID(lat, lon) {
+  const url = `https://www.metaweather.com/api/location/search/?lattlong=${lat},${lon}`;
+  return fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      if (data.length === 0) throw new Error('No location found');
+      return data[0].woeid; // closest location woeid
+    });
+}
 
-    function success(position) {
-      const lat = position.coords.latitude;
-      const lon = position.coords.longitude;
-      fetchWeather(lat, lon);
-    }
+// Step 2: Get weather by WOEID
+function getWeather(woeid) {
+  const url = `https://www.metaweather.com/api/location/${woeid}/`;
+  return fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const today = data.consolidated_weather[0];
+      return {
+        temp: Math.round(today.the_temp),
+        weather_state: today.weather_state_name,
+        icon: today.weather_state_abbr,
+        location: data.title
+      };
+    });
+}
 
-    function error() {
-      statusEl.textContent = 'Unable to retrieve location.';
-      contentEl.innerHTML = `<p>Please allow location access to see the weather.</p>`;
-    }
+function displayWeather(weather) {
+  statusEl.textContent = `Current weather in ${weather.location}:`;
+  contentEl.innerHTML = `
+    <img class="weather-icon" src="${METAWEATHER_ICON_BASE}${weather.icon}.png" alt="${weather.weather_state}" />
+    <p><strong>${weather.temp}°C</strong> — ${weather.weather_state}</p>
+  `;
+}
 
-    if (!navigator.geolocation) {
-      statusEl.textContent = 'Geolocation is not supported by your browser.';
-      contentEl.innerHTML = `<p>Try a different browser or device.</p>`;
-    } else {
-      navigator.geolocation.getCurrentPosition(success, error);
-    }
-  </script>
+function showError(msg) {
+  statusEl.textContent = 'Error: ' + msg;
+  contentEl.textContent = '';
+}
+
+function success(position) {
+  const lat = position.coords.latitude;
+  const lon = position.coords.longitude;
+  getWOEID(lat, lon)
+    .then(getWeather)
+    .then(displayWeather)
+    .catch(err => showError(err.message));
+}
+
+function error() {
+  showError('Unable to retrieve location. Please allow location access.');
+}
+
+if (!navigator.geolocation) {
+  showError('Geolocation is not supported by your browser.');
+} else {
+  navigator.geolocation.getCurrentPosition(success, error);
+}
+</script>
 </body>
 </html>
-
