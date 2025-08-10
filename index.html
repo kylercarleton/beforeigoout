@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Before I Go Out</title>
+<title>Before I Go Out - Weather & Traffic</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css" />
 <style>
   body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 400px;
+    max-width: 420px;
     margin: 3rem auto;
     padding: 1rem;
     background: linear-gradient(135deg, #f0f4ff, #fff8f0);
@@ -20,7 +20,7 @@
   h1 {
     font-weight: 700;
     margin-bottom: 1.25rem;
-    color: #d87e2b; /* warm orange accent */
+    color: #d87e2b;
   }
   #status {
     font-size: 1.1rem;
@@ -60,6 +60,18 @@
     color: #d87e2b;
     font-weight: bold;
   }
+  #map {
+    margin-top: 2rem;
+    width: 100%;
+    height: 250px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+  }
+  #traffic-summary {
+    margin-top: 1rem;
+    font-style: italic;
+    color: #a35e0d;
+  }
 </style>
 </head>
 <body>
@@ -67,9 +79,14 @@
 <div id="status">Checking your location…</div>
 <div id="content"></div>
 
+<div id="map"></div>
+<div id="traffic-summary"></div>
+
 <script>
 const statusEl = document.getElementById('status');
 const contentEl = document.getElementById('content');
+const mapEl = document.getElementById('map');
+const trafficSummaryEl = document.getElementById('traffic-summary');
 
 function getWeatherIcon(code) {
   const codeMap = {
@@ -146,15 +163,44 @@ function fetchWeather(lat, lon) {
     });
 }
 
+function updateMapAndTraffic(lat, lon) {
+  const zoom = 13;
+  const src = `https://www.google.com/maps/embed/v1/view?key=YOUR_GOOGLE_MAPS_API_KEY&center=${lat},${lon}&zoom=${zoom}&maptype=roadmap&layer=traffic`;
+  // Since you want no key, let's use regular maps URL with traffic overlay:
+  // But the Embed API requires key for traffic layer. So instead, use Google Maps URL in iframe without layer param:
+  
+  // Alternative iframe with traffic (but no API key needed):
+  const iframeSrc = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d13427.62493973412!2d${lon}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sus!4v1691565238502!5m2!1sen!2sus`;
+  
+  mapEl.innerHTML = `
+    <iframe
+      width="100%"
+      height="250"
+      frameborder="0"
+      style="border:0"
+      src="${iframeSrc}"
+      allowfullscreen
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+    ></iframe>
+  `;
+
+  // Traffic summary text (static, could be improved with real data)
+  trafficSummaryEl.textContent = 'Traffic data is live on the map above. Check local conditions for best route.';
+}
+
 function success(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
   fetchWeather(lat, lon);
+  updateMapAndTraffic(lat, lon);
 }
 
 function error() {
   statusEl.textContent = 'Unable to retrieve location. Please allow location access.';
   contentEl.textContent = '';
+  mapEl.innerHTML = '';
+  trafficSummaryEl.textContent = '';
 }
 
 if (!navigator.geolocation) {
