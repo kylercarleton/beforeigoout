@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Before I Go Out - MetaWeather</title>
+<title>Before I Go Out - Weather</title>
 <style>
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
@@ -32,10 +32,6 @@
     line-height: 1.6;
     min-height: 120px;
   }
-  img.weather-icon {
-    width: 64px;
-    height: 64px;
-  }
 </style>
 </head>
 <body>
@@ -47,64 +43,42 @@
 const statusEl = document.getElementById('status');
 const contentEl = document.getElementById('content');
 
-// MetaWeather image base URL
-const METAWEATHER_ICON_BASE = 'https://www.metaweather.com/static/img/weather/png/64/';
-
-// Step 1: Get WOEID from lat/lon
-function getWOEID(lat, lon) {
-  const url = `https://www.metaweather.com/api/location/search/?lattlong=${lat},${lon}`;
-  return fetch(url)
+function fetchWeather(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&temperature_unit=fahrenheit`;
+  fetch(url)
     .then(res => res.json())
     .then(data => {
-      if (data.length === 0) throw new Error('No location found');
-      return data[0].woeid; // closest location woeid
+      if (!data.current_weather) {
+        statusEl.textContent = 'Weather data unavailable.';
+        contentEl.textContent = '';
+        return;
+      }
+      const weather = data.current_weather;
+      statusEl.textContent = `Current weather at your location:`;
+      contentEl.innerHTML = `
+        <p><strong>${weather.temperature}°F</strong> — Windspeed: ${weather.windspeed} mph</p>
+      `;
+    })
+    .catch(() => {
+      statusEl.textContent = 'Error fetching weather data.';
+      contentEl.textContent = '';
     });
-}
-
-// Step 2: Get weather by WOEID
-function getWeather(woeid) {
-  const url = `https://www.metaweather.com/api/location/${woeid}/`;
-  return fetch(url)
-    .then(res => res.json())
-    .then(data => {
-      const today = data.consolidated_weather[0];
-      return {
-        temp: Math.round(today.the_temp),
-        weather_state: today.weather_state_name,
-        icon: today.weather_state_abbr,
-        location: data.title
-      };
-    });
-}
-
-function displayWeather(weather) {
-  statusEl.textContent = `Current weather in ${weather.location}:`;
-  contentEl.innerHTML = `
-    <img class="weather-icon" src="${METAWEATHER_ICON_BASE}${weather.icon}.png" alt="${weather.weather_state}" />
-    <p><strong>${weather.temp}°C</strong> — ${weather.weather_state}</p>
-  `;
-}
-
-function showError(msg) {
-  statusEl.textContent = 'Error: ' + msg;
-  contentEl.textContent = '';
 }
 
 function success(position) {
   const lat = position.coords.latitude;
   const lon = position.coords.longitude;
-  getWOEID(lat, lon)
-    .then(getWeather)
-    .then(displayWeather)
-    .catch(err => showError(err.message));
+  fetchWeather(lat, lon);
 }
 
 function error() {
-  showError('Unable to retrieve location. Please allow location access.');
+  statusEl.textContent = 'Unable to retrieve location. Please allow location access.';
+  contentEl.textContent = '';
 }
 
 if (!navigator.geolocation) {
-  showError('Geolocation is not supported by your browser.');
+  statusEl.textContent = 'Geolocation is not supported by your browser.';
+  contentEl.textContent = '';
 } else {
   navigator.geolocation.getCurrentPosition(success, error);
 }
