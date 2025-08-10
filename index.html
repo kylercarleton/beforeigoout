@@ -6,25 +6,36 @@
 <title>Before I Go Out - Weather & Traffic Summary</title>
 <style>
   body {
-    font-family: Arial, sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     max-width: 400px;
-    margin: 2rem auto;
-    padding: 1rem;
-    background: #f9f9f9;
-    color: #333;
+    margin: 3rem auto;
+    padding: 1.5rem 1.2rem;
+    background: linear-gradient(135deg, #f0f4ff, #fff8f0);
+    color: #444;
     text-align: center;
-    border-radius: 8px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.1);
   }
   h1 {
     color: #d87e2b;
+    margin-bottom: 1rem;
   }
   #status {
+    font-weight: 600;
+    color: #666;
     margin-bottom: 1rem;
-    font-weight: bold;
   }
   #weather-summary, #traffic-summary {
-    margin: 1rem 0;
+    background: #fff;
+    padding: 1rem 1.2rem;
+    border-radius: 10px;
+    margin: 0.8rem 0;
+    box-shadow: 0 4px 12px rgb(216 126 43 / 0.15);
+    font-size: 1.1rem;
+  }
+  #traffic-summary {
+    color: #a35e0d;
+    font-style: italic;
   }
 </style>
 </head>
@@ -40,10 +51,13 @@
     const trafficEl = document.getElementById('traffic-summary');
 
     function getTrafficSummary(hour) {
-      // Simple simulated traffic summary based on time of day
-      if (hour >= 7 && hour <= 9) return 'Morning rush hour: expect heavy traffic.';
-      if (hour >= 16 && hour <= 18) return 'Evening rush hour: expect heavy traffic.';
-      if (hour >= 10 && hour <= 15) return 'Traffic is moderate.';
+      // More detailed time-based traffic summary
+      if (hour >= 6 && hour < 9) return 'Morning rush hour is underway — expect heavy traffic.';
+      if (hour >= 9 && hour < 11) return 'Traffic is easing up — moderate flow on roads.';
+      if (hour >= 11 && hour < 15) return 'Midday traffic is generally light.';
+      if (hour >= 15 && hour < 18) return 'Evening rush hour is starting — expect delays.';
+      if (hour >= 18 && hour < 20) return 'Traffic is gradually clearing — moderate flow.';
+      if (hour >= 20 && hour < 23) return 'Late evening — roads are mostly clear.';
       return 'Traffic is light right now.';
     }
 
