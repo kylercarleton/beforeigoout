@@ -1,64 +1,157 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Before I Go Out - Weather & Traffic Summary</title>
-<style>
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    max-width: 400px;
-    margin: 3rem auto;
-    padding: 1.5rem 1.2rem;
-    background: linear-gradient(135deg, #f0f4ff, #fff8f0);
-    color: #444;
-    text-align: center;
-    border-radius: 12px;
-    box-shadow: 0 12px 32px rgb(0 0 0 / 0.1);
-  }
-  h1 {
-    color: #d87e2b;
-    margin-bottom: 1rem;
-  }
-  #status {
-    font-weight: 600;
-    color: #666;
-    margin-bottom: 1rem;
-  }
-  #weather-summary, #traffic-summary {
-    background: #fff;
-    padding: 1rem 1.2rem;
-    border-radius: 10px;
-    margin: 0.8rem 0;
-    box-shadow: 0 4px 12px rgb(216 126 43 / 0.15);
-    font-size: 1.1rem;
-  }
-  #traffic-summary {
-    color: #a35e0d;
-    font-style: italic;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Before I Go Out - Weather & Traffic</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    /* Reset & base */
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0; 
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      font-family: 'Poppins', sans-serif;
+      color: #f0f0f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #container {
+      background: rgba(255 255 255 / 0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      max-width: 420px;
+      width: 100%;
+      padding: 2rem 2.5rem;
+      box-shadow: 0 20px 40px rgb(0 0 0 / 0.15);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    h1 {
+      margin-top: 0;
+      font-weight: 600;
+      font-size: 2.4rem;
+      letter-spacing: 0.05em;
+      margin-bottom: 1.4rem;
+      color: #ffdd59;
+      text-shadow: 0 0 10px #ffdd59aa;
+    }
+    #status {
+      font-weight: 500;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      opacity: 0.85;
+    }
+    #weather-summary {
+      background: rgba(255 255 255 / 0.2);
+      border-radius: 15px;
+      padding: 1rem 1.5rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #fff;
+      box-shadow: 0 4px 15px rgb(255 255 255 / 0.15);
+      margin-bottom: 1.8rem;
+      transition: background-color 0.4s ease;
+    }
+    #traffic-summary {
+      font-size: 1.1rem;
+      font-style: italic;
+      padding: 1rem 1.5rem;
+      border-radius: 15px;
+      color: #ffeaa7;
+      background: rgba(255 255 255 / 0.15);
+      box-shadow: 0 3px 12px rgb(255 255 255 / 0.12);
+      min-height: 72px;
+      line-height: 1.4;
+      transition: background-color 0.4s ease, color 0.4s ease;
+    }
+    /* Highlight heavy traffic */
+    #traffic-summary.heavy {
+      background: #ff3e3e;
+      color: #fff;
+      box-shadow: 0 6px 20px rgb(255 62 62 / 0.8);
+      font-weight: 700;
+      font-size: 1.15rem;
+    }
+    /* Subtle fade-in */
+    #status, #weather-summary, #traffic-summary {
+      opacity: 0;
+      animation: fadeIn 0.8s forwards;
+    }
+    #weather-summary {
+      animation-delay: 0.3s;
+    }
+    #traffic-summary {
+      animation-delay: 0.6s;
+    }
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
 </head>
 <body>
-  <h1>Before I Go Out</h1>
-  <div id="status">Detecting your location...</div>
-  <div id="weather-summary"></div>
-  <div id="traffic-summary">Loading traffic summary...</div>
+  <div id="container">
+    <h1>Before I Go Out</h1>
+    <div id="status">Detecting your location…</div>
+    <div id="weather-summary"></div>
+    <div id="traffic-summary">Loading traffic summary…</div>
+  </div>
 
   <script>
     const statusEl = document.getElementById('status');
     const weatherEl = document.getElementById('weather-summary');
     const trafficEl = document.getElementById('traffic-summary');
 
-    function getTrafficSummary(hour) {
-      // More detailed time-based traffic summary
-      if (hour >= 6 && hour < 9) return 'Morning rush hour is underway — expect heavy traffic.';
-      if (hour >= 9 && hour < 11) return 'Traffic is easing up — moderate flow on roads.';
-      if (hour >= 11 && hour < 15) return 'Midday traffic is generally light.';
-      if (hour >= 15 && hour < 18) return 'Evening rush hour is starting — expect delays.';
-      if (hour >= 18 && hour < 20) return 'Traffic is gradually clearing — moderate flow.';
-      if (hour >= 20 && hour < 23) return 'Late evening — roads are mostly clear.';
-      return 'Traffic is light right now.';
+    function getDetailedTraffic(hour) {
+      // Return heavy traffic detailed messages during rush hours, else simpler messages
+      if (hour >= 6 && hour < 9) {
+        return {
+          text: "Morning rush hour: Expect slowdowns on main highways, especially near downtown and school zones.",
+          heavy: true
+        };
+      }
+      if (hour >= 9 && hour < 11) {
+        return {
+          text: "Traffic is easing. Roads are mostly clear but occasional slow patches near construction zones.",
+          heavy: false
+        };
+      }
+      if (hour >= 11 && hour < 15) {
+        return {
+          text: "Midday traffic is light with smooth flow on all major routes.",
+          heavy: false
+        };
+      }
+      if (hour >= 15 && hour < 18) {
+        return {
+          text: "Evening rush hour: Congestion expected on arterial roads and near shopping centers. Allow extra commute time.",
+          heavy: true
+        };
+      }
+      if (hour >= 18 && hour < 20) {
+        return {
+          text: "Traffic gradually clearing, but watch for bottlenecks near popular restaurants.",
+          heavy: false
+        };
+      }
+      if (hour >= 20 && hour < 23) {
+        return {
+          text: "Late evening: Roads are mostly clear and ideal for driving.",
+          heavy: false
+        };
+      }
+      return {
+        text: "Traffic is light right now.",
+        heavy: false
+      };
     }
 
     function fetchWeather(lat, lon) {
@@ -85,7 +178,13 @@
       fetchWeather(lat, lon);
 
       const hour = new Date().getHours();
-      trafficEl.textContent = getTrafficSummary(hour);
+      const traffic = getDetailedTraffic(hour);
+      trafficEl.textContent = traffic.text;
+      if (traffic.heavy) {
+        trafficEl.classList.add('heavy');
+      } else {
+        trafficEl.classList.remove('heavy');
+      }
     }
 
     function error() {
